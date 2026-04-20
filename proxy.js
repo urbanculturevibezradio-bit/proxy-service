@@ -6,31 +6,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Root test route
 app.get("/", (req, res) => {
   res.send("Proxy is running");
 });
 
-app.post("/fetch", async (req, res) => {
-  try {
-    const { url, options } = req.body;
+// Main proxy route
+app.get("/proxy", async (req, res) => {
+  const targetUrl = req.query.url;
 
-    const response = await fetch(url, options || {});
-    const text = await response.text();
-
-    res.send({
-      ok: true,
-      status: response.status,
-      data: text,
-    });
-  } catch (error) {
-    res.status(500).send({
-      ok: false,
-      error: error.message,
-    });
+  if (!targetUrl) {
+    return res.status(400).json({ error: "Missing url parameter" });
   }
-});
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Proxy running on port ${port}`);
-});
+  try {
+    const response = await fetch(targetUrl);
+    const data = await response.text();
+
+    res.set("Content-Type", response.headers.get("content-type") || "text/plain");
+    res.send(data);
+  } catch
